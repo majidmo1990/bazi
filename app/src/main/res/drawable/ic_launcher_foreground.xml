@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer orbital ring -->
+    <path
+        android:pathData="M 54,26 A 28,12 30 1 1 53.9,26"
+        android:strokeWidth="3"
+        android:strokeColor="#00F5D4"
+        android:fillColor="#00000000" />
+    
+    <!-- Outer Glow behind orb -->
+    <path
+        android:pathData="M54,54m-20,0a20,20 0 1,0 40,0a20,20 0 1,0 -40,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="54"
+                android:centerY="54"
+                android:gradientRadius="20"
+                android:type="radial">
+                <item android:offset="0.0" android:color="#FF006E" />
+                <item android:offset="0.7" android:color="#7B2FFC" />
+                <item android:offset="1.0" android:color="#0000B4D8" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Core glowing orb -->
+    <path
+        android:pathData="M54,54m-12,0a12,12 0 1,0 24,0a12,12 0 1,0 -24,0"
+        android:fillColor="#FFE600" />
+    <path
+        android:pathData="M51,51m-4,0a4,4 0 1,0 8,0a4,4 0 1,0 -8,0"
+        android:fillColor="#FFFFFF" />
+
+    <!-- Orbital front segment -->
+    <path
+        android:pathData="M 33,63 A 28,12 30 0 0 75,45"
+        android:strokeWidth="3.5"
+        android:strokeColor="#FF006E"
+        android:fillColor="#00000000" />
+</vector>

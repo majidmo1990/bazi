@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Cosmic deep space gradient background -->
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="108"
+                android:endY="108"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#0b0819" />
+                <item android:offset="0.5" android:color="#1a0b2e" />
+                <item android:offset="1.0" android:color="#081026" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Distant stars -->
+    <path android:fillColor="#80FFFFFF" android:pathData="M24,20a1,1 0 1,0 2,0a1,1 0 1,0 -2,0 M85,25a1.5,1.5 0 1,0 3,0a1.5,1.5 0 1,0 -3,0 M15,75a1,1 0 1,0 2,0a1,1 0 1,0 -2,0 M92,80a1.2,1.2 0 1,0 2.4,0a1.2,1.2 0 1,0 -2.4,0 M50,15a1.5,1.5 0 1,0 3,0a1.5,1.5 0 1,0 -3,0" />
+</vector>

@@ -1,0 +1,1996 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>کهکشان رنگ‌ها | Color Galaxy</title>
+  <style>
+    /* ==========================================================================
+       استایل‌های پایه و متغیرهای رنگی بازی کهکشان رنگ‌ها
+       Base Styles & 7-Color Palette
+       ========================================================================== */
+    :root {
+      --color-red: #ff006e;
+      --color-blue: #00b4d8;
+      --color-green: #00ff87;
+      --color-yellow: #ffe600;
+      --color-purple: #7b2ffc;
+      --color-pink: #ff6b6b;
+      --color-turquoise: #00f5d4;
+      
+      --bg-dark: #070913;
+      --card-bg: rgba(25, 27, 47, 0.65);
+      --card-border: rgba(255, 255, 255, 0.15);
+      --text-main: #f0f4fc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 20%, #151133 0%, #080914 60%, #030408 100%);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Vazirmatn', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 10px 40px;
+      overflow-x: hidden;
+      touch-action: manipulation;
+    }
+
+    /* جهت نوشتار برای زبان‌های راست‌به‌چپ و چپ‌به‌راست */
+    body.ltr {
+      direction: ltr;
+    }
+    body.rtl {
+      direction: rtl;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* ۱. نوار انتخاب زبان در بالای صفحه */
+    .lang-bar {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 6px;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    .lang-btn {
+      flex: 1;
+      min-height: 44px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 24px;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.25s ease;
+    }
+
+    .lang-btn.active {
+      background: linear-gradient(135deg, rgba(123, 47, 252, 0.5), rgba(0, 245, 212, 0.4));
+      color: #ffffff;
+      border-color: rgba(0, 245, 212, 0.6);
+      box-shadow: 0 0 14px rgba(0, 245, 212, 0.3);
+    }
+
+    /* ۲. عنوان بازی */
+    .game-header {
+      text-align: center;
+      margin: 4px 0;
+    }
+
+    .game-title {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, #00f5d4 0%, #ffe600 50%, #ff006e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 25px rgba(0, 245, 212, 0.3);
+    }
+
+    .game-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ۳. بوم بازی (Canvas 500x500) */
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 500px;
+      aspect-ratio: 1 / 1;
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(123, 47, 252, 0.3);
+      border: 2px solid rgba(123, 47, 252, 0.4);
+      background: #05060f;
+    }
+
+    #gameCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    /* پوشش شروع بازی و پایان بازی روی بوم */
+    .canvas-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(5, 7, 18, 0.78);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 20px;
+      text-align: center;
+      transition: opacity 0.3s ease;
+      z-index: 10;
+    }
+
+    .canvas-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .overlay-title {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .overlay-score {
+      font-size: 18px;
+      color: var(--color-yellow);
+      margin-bottom: 18px;
+    }
+
+    .primary-btn {
+      min-width: 180px;
+      min-height: 50px;
+      padding: 12px 28px;
+      background: linear-gradient(135deg, var(--color-red), var(--color-purple));
+      color: #fff;
+      border: none;
+      border-radius: 25px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 0 18px rgba(255, 0, 110, 0.5);
+      transition: transform 0.15s, box-shadow 0.15s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .primary-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* نوار پیشرفت به سمت مرحله بعدی */
+    .progress-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--color-turquoise), var(--color-yellow), var(--color-red));
+      transition: width 0.3s ease;
+      box-shadow: 0 0 8px var(--color-turquoise);
+    }
+
+    /* ۴. پنل اطلاعات (رکورد، جان، زمان، کامبو) */
+    .info-panel {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .info-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 64px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+    }
+
+    .info-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .info-val {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .lives-val {
+      color: #ffd700;
+      letter-spacing: 2px;
+      font-size: 14px;
+    }
+
+    .combo-val {
+      color: var(--color-turquoise);
+    }
+
+    /* ۵. دکمه‌های کنترل (شروع مجدد، انتخاب رنگ، تنظیمات) */
+    .controls-panel {
+      width: 100%;
+      display: flex;
+      gap: 8px;
+    }
+
+    .ctrl-btn {
+      flex: 1;
+      min-height: 48px;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      color: var(--text-main);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .ctrl-btn:active, .ctrl-btn.active {
+      background: rgba(123, 47, 252, 0.35);
+      border-color: var(--color-turquoise);
+      color: #fff;
+    }
+
+    /* ۶. منوی انتخاب رنگ (۷ رنگ اسکین) */
+    .skins-container {
+      width: 100%;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 12px 14px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .skins-container.open {
+      display: flex;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .skins-palette {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .skin-circle {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+
+    .skin-circle:active {
+      transform: scale(0.9);
+    }
+
+    .skin-circle.selected {
+      border-color: #ffffff;
+      transform: scale(1.15);
+      box-shadow: 0 0 16px currentColor;
+    }
+
+    /* ۷. پنل تنظیمات */
+    .settings-container {
+      width: 100%;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 14px;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .settings-container.open {
+      display: flex;
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      min-height: 44px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: rgba(255, 255, 255, 0.2);
+      transition: .3s;
+      border-radius: 28px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--color-turquoise);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+
+    .danger-btn {
+      width: 100%;
+      min-height: 44px;
+      background: rgba(255, 0, 110, 0.15);
+      border: 1px solid var(--color-red);
+      color: #ff85a1;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .danger-btn:active {
+      background: var(--color-red);
+      color: #fff;
+    }
+
+    /* ۸. جدول رکوردها (۵ رکورد برتر) */
+    .highscores-container {
+      width: 100%;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .highscores-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .highscores-table th {
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: inherit;
+    }
+
+    .highscores-table td {
+      padding: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+    }
+
+    .highscores-table tr:first-child td {
+      color: var(--color-yellow);
+      font-weight: 700;
+    }
+
+    /* بنر پیام موقت رویدادها (مثلاً لول‌آپ یا کامبو) */
+    .toast-banner {
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(123, 47, 252, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--color-turquoise);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      z-index: 20;
+      box-shadow: 0 0 16px var(--color-turquoise);
+      white-space: nowrap;
+    }
+
+    .toast-banner.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body class="rtl">
+
+  <div class="container">
+    
+    <!-- ۱. نوار انتخاب زبان (۳ دکمه با پرچم) -->
+    <nav class="lang-bar" id="langBar" aria-label="Language selection">
+      <button type="button" class="lang-btn active" data-lang="fa">🇮🇷 فارسی</button>
+      <button type="button" class="lang-btn" data-lang="az">🇹🇷 ترکی</button>
+      <button type="button" class="lang-btn" data-lang="en">🇬🇧 English</button>
+    </nav>
+
+    <!-- ۲. عنوان بازی متناسب با زبان -->
+    <header class="game-header">
+      <h1 class="game-title" id="txtGameTitle">کهکشان رنگ‌ها</h1>
+      <p class="game-subtitle" id="txtGameSubtitle">Color Galaxy Arcade</p>
+    </header>
+
+    <!-- نوار پیشرفت مرحله / سختی -->
+    <div class="progress-container" title="Level Progress">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- ۳. بوم بازی (Canvas 500x500) -->
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas" width="500" height="500"></canvas>
+
+      <!-- پیام موقت اعلانات بازی (کامبو، لول‌آپ، جان از دست رفته) -->
+      <div class="toast-banner" id="toastBanner">پیام</div>
+
+      <!-- لایه رویی صفحه شروع یا Game Over -->
+      <div class="canvas-overlay" id="canvasOverlay">
+        <h2 class="overlay-title" id="overlayTitle">کهکشان رنگ‌ها</h2>
+        <div class="overlay-score" id="overlayScore"></div>
+        <button type="button" class="primary-btn" id="startBtn">
+          <span id="txtStartBtn">برای شروع کلیک کن</span>
+          <span>🚀</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ۴. پنل اطلاعات (رکورد، جان، زمان، کامبو) -->
+    <section class="info-panel" aria-label="Game stats">
+      <div class="info-card">
+        <span class="info-label" id="lblScore">رکورد</span>
+        <span class="info-val" id="valScore">0</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label" id="lblLives">جان‌ها</span>
+        <span class="info-val lives-val" id="valLives">💛💛💛</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label" id="lblTime">زمان</span>
+        <span class="info-val" id="valTime">30</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label" id="lblCombo">کامبو</span>
+        <span class="info-val combo-val" id="valCombo">×0</span>
+      </div>
+    </section>
+
+    <!-- ۵. دکمه‌های کنترل (شروع مجدد، انتخاب رنگ، تنظیمات) -->
+    <div class="controls-panel">
+      <button type="button" class="ctrl-btn" id="btnRestart">
+        <span>🔄</span>
+        <span id="txtRestart">شروع مجدد</span>
+      </button>
+      <button type="button" class="ctrl-btn" id="btnSkinToggle">
+        <span>🎨</span>
+        <span id="txtChooseSkin">انتخاب رنگ</span>
+      </button>
+      <button type="button" class="ctrl-btn" id="btnSettingsToggle">
+        <span>⚙️</span>
+        <span id="txtSettings">تنظیمات</span>
+      </button>
+    </div>
+
+    <!-- ۶. منوی انتخاب رنگ اسکین (۷ دایره رنگی) -->
+    <section class="skins-container" id="skinsContainer">
+      <span class="section-title" id="txtSkinSectionTitle">انتخاب رنگ توپ:</span>
+      <div class="skins-palette" id="skinsPalette"></div>
+    </section>
+
+    <!-- ۷. پنل تنظیمات -->
+    <section class="settings-container" id="settingsContainer">
+      <h3 class="section-title" id="txtSettingsTitle">تنظیمات بازی</h3>
+      <div class="setting-row">
+        <span id="txtSoundEffects">افکت‌های صوتی</span>
+        <label class="switch">
+          <input type="checkbox" id="chkSfx" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <span id="txtBgMusic">موسیقی پس‌زمینه</span>
+        <label class="switch">
+          <input type="checkbox" id="chkMusic" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <button type="button" class="danger-btn" id="btnResetScores">
+        <span id="txtResetScores">ریست رکوردها</span>
+      </button>
+    </section>
+
+    <!-- ۸. نمایش رکوردهای برتر (۵ رکورد برتر با تاریخ) -->
+    <section class="highscores-container">
+      <h3 class="section-title" id="txtHighScoresTitle">بهترین رکوردها</h3>
+      <table class="highscores-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th id="thPoints">امتیاز</th>
+            <th id="thLevel">سطح</th>
+            <th id="thDate">تاریخ</th>
+          </tr>
+        </thead>
+        <tbody id="highScoresBody">
+          <!-- با جاوااسکریپت پر می‌شود -->
+        </tbody>
+      </table>
+    </section>
+
+  </div>
+
+  <!-- ==========================================================================
+       منطق کامل بازی (جاوا اسکریپت ماژولار و بهینه‌سازی شده)
+       ========================================================================== -->
+  <script>
+    /**
+     * جدول جامع ترجمه‌ها به ۳ زبان: فارسی، ترکی (با نوشتار فارسی) و انگلیسی
+     */
+    const TRANSLATIONS = {
+      restart: { fa: "شروع مجدد", az: "یئنیدن باشلاش", en: "Restart" },
+      choose_skin: { fa: "انتخاب رنگ", az: "رنگ سئچ", en: "Choose Skin" },
+      score: { fa: "رکورد", az: "رکورد", en: "Score" },
+      lives: { fa: "جان‌ها", az: "جانلار", en: "Lives" },
+      time: { fa: "زمان", az: "زامان", en: "Time" },
+      combo: { fa: "کامبو", az: "کامبو", en: "Combo" },
+      game_over: { fa: "بازی تمام شد!", az: "اویون بیتدی!", en: "Game Over!" },
+      you_won: { fa: "برنده شدی!", az: "قازاندین!", en: "You Won!" },
+      select_lang: { fa: "انتخاب زبان", az: "دیل سئچ", en: "Select Language" },
+      high_scores: { fa: "بهترین رکوردها", az: "ان یاخشی رکوردلار", en: "High Scores" },
+      date: { fa: "تاریخ", az: "تاریخ", en: "Date" },
+      points: { fa: "امتیاز", az: "خال", en: "Points" },
+      level: { fa: "سطح", az: "سویه", en: "Level" },
+      enemy: { fa: "دشمن", az: "دوشمن", en: "Enemy" },
+      portal: { fa: "پورتال", az: "پورتال", en: "Portal" },
+      settings: { fa: "تنظیمات", az: "تنظیمات", en: "Settings" },
+      music: { fa: "موسیقی", az: "موسیقی", en: "Music" },
+      sound: { fa: "صدا", az: "سس", en: "Sound" },
+      hard: { fa: "دشوار", az: "چتین", en: "Hard" },
+      easy: { fa: "آسان", az: "آسان", en: "Easy" },
+      medium: { fa: "متوسط", az: "اورتا", en: "Medium" },
+      click_to_start: { fa: "برای شروع کلیک کن", az: "باشلاماق اوچون توخون", en: "Click to start" },
+      new_record: { fa: "رکورد جدید! 🎉", az: "یئنی رکورد! 🎉", en: "New Record! 🎉" },
+      combo_x: { fa: "کامبو ×", az: "کامبو ×", en: "Combo ×" },
+      life_lost: { fa: "یک جان از دست دادی! ❤️", az: "بیر جان ایتیردین! ❤️", en: "Lost a life! ❤️" },
+      level_up: { fa: "مرحله جدید! ⭐", az: "یئنی مرحله! ⭐", en: "Level Up! ⭐" },
+      best_score: { fa: "بهترین رکورد", az: "ان یاخشی رکورد", en: "Best Score" },
+      your_score: { fa: "امتیاز شما", az: "خالینیز", en: "Your Score" },
+      play_again: { fa: "دوباره بازی کن", az: "یئنیدن اویون", en: "Play Again" },
+      settings_title: { fa: "تنظیمات بازی", az: "اویون تنظیماتلاری", en: "Game Settings" },
+      sound_effects: { fa: "افکت‌های صوتی", az: "سس افکتلری", en: "Sound Effects" },
+      background_music: { fa: "موسیقی پس‌زمینه", az: "آرخا پلان موسیقیسی", en: "Background Music" },
+      reset_scores: { fa: "ریست رکوردها", az: "رکوردلاری سیلمک", en: "Reset Scores" },
+      confirm_reset: { fa: "مطمئنی؟", az: "امینسن؟", en: "Are you sure?" },
+      enemies: { fa: "دشمن‌ها", az: "دوشمنلر", en: "Enemies" },
+      portals_active: { fa: "پورتال‌ها فعال", az: "پورتاللار فعال", en: "Portals Active" },
+      difficulty: { fa: "سختی", az: "چتینلیک", en: "Difficulty" },
+      game_title: { fa: "کهکشان رنگ‌ها", az: "رنگلر کهکشانی", en: "Color Galaxy" },
+      game_desc: { fa: "بازی فضایی با عبور از موانع همرنگ", az: "همرنگ مانعلردن کئچمه اویونو", en: "Space arcade color matching game" }
+    };
+
+    /**
+     * چرخه ۷ رنگ درخواستی در پرامپت
+     */
+    const PALETTE = [
+      { name: "قرمز نئونی", hex: "#ff006e" },
+      { name: "آبی الکتریک", hex: "#00b4d8" },
+      { name: "سبز لیزری", hex: "#00ff87" },
+      { name: "زرد کهکشانی", hex: "#ffe600" },
+      { name: "بنفش کیهانی", hex: "#7b2ffc" },
+      { name: "صورتی گرم", hex: "#ff6b6b" },
+      { name: "فیروزه‌ای درخشان", hex: "#00f5d4" }
+    ];
+
+    /**
+     * موتور صوتی Web Audio API بدون نیاز به فایل خارجی
+     */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.sfxEnabled = true;
+        this.musicEnabled = true;
+        this.bgmOscs = [];
+        this.bgmGain = null;
+        this.bgmTimer = null;
+        this.isBgmPlaying = false;
+      }
+
+      initContext() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playPing() {
+        if (!this.sfxEnabled) return;
+        this.initContext();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, now); // D5
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.12); // A5
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.35);
+      }
+
+      playBoom() {
+        if (!this.sfxEnabled) return;
+        this.initContext();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.exponentialRampToValueAtTime(35, now + 0.45);
+
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.5);
+      }
+
+      playLevelUp() {
+        if (!this.sfxEnabled) return;
+        this.initContext();
+        if (!this.ctx) return;
+
+        const notes = [440, 554.37, 659.25, 880]; // A major
+        notes.forEach((freq, idx) => {
+          const now = this.ctx.currentTime + idx * 0.08;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now);
+
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.3);
+        });
+      }
+
+      playGameOver() {
+        if (!this.sfxEnabled) return;
+        this.initContext();
+        if (!this.ctx) return;
+
+        const notes = [400, 350, 300, 220];
+        notes.forEach((freq, idx) => {
+          const now = this.ctx.currentTime + idx * 0.18;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, now);
+
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.4);
+        });
+      }
+
+      playCombo() {
+        if (!this.sfxEnabled) return;
+        this.initContext();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(700, now);
+        osc.frequency.exponentialRampToValueAtTime(1400, now + 0.2);
+
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.25);
+      }
+
+      playPortal() {
+        if (!this.sfxEnabled) return;
+        this.initContext();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.linearRampToValueAtTime(900, now + 0.15);
+        osc.frequency.linearRampToValueAtTime(450, now + 0.3);
+
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.3);
+      }
+
+      startBgm() {
+        if (!this.musicEnabled) return;
+        this.initContext();
+        if (!this.ctx || this.isBgmPlaying) return;
+
+        this.isBgmPlaying = true;
+        const chords = [
+          [220, 261.63, 329.63], // Am
+          [174.61, 220, 261.63], // F
+          [196, 246.94, 293.66], // G
+          [164.81, 196, 246.94]  // Em
+        ];
+        let chordIndex = 0;
+
+        const playNextChord = () => {
+          if (!this.isBgmPlaying || !this.musicEnabled) return;
+          const currentNotes = chords[chordIndex % chords.length];
+          chordIndex++;
+
+          currentNotes.forEach((freq) => {
+            if (!this.ctx) return;
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now);
+
+            // پد ملایم و نرم فضایی
+            gain.gain.setValueAtTime(0.001, now);
+            gain.gain.linearRampToValueAtTime(0.04, now + 1.2);
+            gain.gain.linearRampToValueAtTime(0.001, now + 3.8);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + 4.0);
+          });
+
+          this.bgmTimer = setTimeout(playNextChord, 3600);
+        };
+
+        playNextChord();
+      }
+
+      stopBgm() {
+        this.isBgmPlaying = false;
+        if (this.bgmTimer) {
+          clearTimeout(this.bgmTimer);
+          this.bgmTimer = null;
+        }
+      }
+    }
+
+    /**
+     * سیستم مدیریت رکوردهای بازی با LocalStorage
+     */
+    class HighScoreManager {
+      constructor() {
+        this.storageKey = 'color_galaxy_high_scores';
+      }
+
+      getScores() {
+        try {
+          const raw = localStorage.getItem(this.storageKey);
+          if (!raw) return [];
+          const list = JSON.parse(raw);
+          return Array.isArray(list) ? list : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      saveScore(points, level) {
+        const list = this.getScores();
+        const dateStr = new Date().toLocaleDateString('fa-IR', {
+          month: 'short',
+          day: 'numeric'
+        });
+        list.push({ score: points, level: level, date: dateStr, timestamp: Date.now() });
+        // مرتب‌سازی بر اساس بیشترین امتیاز
+        list.sort((a, b) => b.score - a.score);
+        const top5 = list.slice(0, 5);
+        localStorage.setItem(this.storageKey, JSON.stringify(top5));
+        return top5;
+      }
+
+      isNewRecord(score) {
+        if (score <= 0) return false;
+        const list = this.getScores();
+        if (list.length === 0) return true;
+        return score > list[0].score;
+      }
+
+      clearScores() {
+        localStorage.removeItem(this.storageKey);
+      }
+    }
+
+    /**
+     * کلاس اصلی بازی کهکشان رنگ‌ها
+     */
+    class ColorGalaxyGame {
+      constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.sound = new SoundEngine();
+        this.highScores = new HighScoreManager();
+
+        // ابعاد استاندارد بوم (۵۰۰×۵۰۰)
+        this.W = 500;
+        this.H = 500;
+        this.canvas.width = this.W;
+        this.canvas.height = this.H;
+
+        // وضعیت کنونی زبان
+        this.currentLang = 'fa';
+
+        // وضعیت بازیکن
+        this.selectedSkinIndex = 3; // رنگ پیش‌فرض: زرد کهکشانی
+        this.player = {
+          x: 250,
+          y: 250,
+          radius: 16,
+          targetX: 250,
+          targetY: 250,
+          color: PALETTE[this.selectedSkinIndex].hex,
+          trail: []
+        };
+
+        // متغیرهای روند بازی
+        this.isPlaying = false;
+        this.score = 0;
+        this.lives = 3;
+        this.timeLeft = 30;
+        this.level = 1;
+        this.baseSpeed = 2.0;
+        this.comboCount = 0;
+        this.lastHitTime = 0;
+
+        // نهادهای بازی (موانع، دشمن‌ها، پورتال‌ها، ذرات)
+        this.obstacles = [];
+        this.enemies = [];
+        this.portals = [];
+        this.particles = [];
+        this.confetti = [];
+        this.floatingTexts = [];
+        this.stars = [];
+
+        // تایمرها و زمان‌بندی
+        this.timerInterval = null;
+        this.portalTimerInterval = null;
+        this.lastFrameTime = performance.now();
+
+        // کنترل لرزش صفحه هنگام آسیب
+        this.shakeTimer = 0;
+
+        this.initStars();
+        this.initDOM();
+        this.initInput();
+        this.updateLanguageUI();
+        this.renderHighScoresTable();
+
+        // رندر حلقه اولیه انیمیشن
+        requestAnimationFrame(this.gameLoop.bind(this));
+      }
+
+      /**
+       * ایجاد پس‌زمینه ستاره‌ای چشمک‌زن
+       */
+      initStars() {
+        this.stars = [];
+        for (let i = 0; i < 90; i++) {
+          this.stars.push({
+            x: Math.random() * this.W,
+            y: Math.random() * this.H,
+            radius: Math.random() * 1.6 + 0.4,
+            alpha: Math.random(),
+            pulseSpeed: Math.random() * 0.03 + 0.01
+          });
+        }
+      }
+
+      /**
+       * اتصال عناصر DOM و رویدادها
+       */
+      initDOM() {
+        // دکمه‌های زبان
+        const langBtns = document.querySelectorAll('.lang-btn');
+        langBtns.forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const lang = btn.getAttribute('data-lang');
+            this.setLanguage(lang);
+          });
+        });
+
+        // پالت اسکین‌ها (۷ رنگ)
+        const skinsPalette = document.getElementById('skinsPalette');
+        skinsPalette.innerHTML = '';
+        PALETTE.forEach((color, idx) => {
+          const circle = document.createElement('div');
+          circle.className = `skin-circle ${idx === this.selectedSkinIndex ? 'selected' : ''}`;
+          circle.style.backgroundColor = color.hex;
+          circle.style.color = color.hex;
+          circle.title = color.name;
+          circle.addEventListener('click', () => {
+            this.selectedSkinIndex = idx;
+            this.player.color = color.hex;
+            document.querySelectorAll('.skin-circle').forEach((c, i) => {
+              c.classList.toggle('selected', i === idx);
+            });
+            this.showToast(color.name);
+          });
+          skinsPalette.appendChild(circle);
+        });
+
+        // دکمه شروع / شروع مجدد
+        document.getElementById('startBtn').addEventListener('click', () => {
+          this.sound.initContext();
+          this.startNewGame();
+        });
+
+        document.getElementById('btnRestart').addEventListener('click', () => {
+          this.sound.initContext();
+          this.startNewGame();
+        });
+
+        // تاگل منوی اسکین
+        const skinsContainer = document.getElementById('skinsContainer');
+        const btnSkinToggle = document.getElementById('btnSkinToggle');
+        btnSkinToggle.addEventListener('click', () => {
+          skinsContainer.classList.toggle('open');
+          btnSkinToggle.classList.toggle('active');
+        });
+
+        // تاگل منوی تنظیمات
+        const settingsContainer = document.getElementById('settingsContainer');
+        const btnSettingsToggle = document.getElementById('btnSettingsToggle');
+        btnSettingsToggle.addEventListener('click', () => {
+          settingsContainer.classList.toggle('open');
+          btnSettingsToggle.classList.toggle('active');
+        });
+
+        // تنظیمات صدا و موزیک
+        const chkSfx = document.getElementById('chkSfx');
+        chkSfx.addEventListener('change', (e) => {
+          this.sound.sfxEnabled = e.target.checked;
+        });
+
+        const chkMusic = document.getElementById('chkMusic');
+        chkMusic.addEventListener('change', (e) => {
+          this.sound.musicEnabled = e.target.checked;
+          if (e.target.checked) {
+            if (this.isPlaying) this.sound.startBgm();
+          } else {
+            this.sound.stopBgm();
+          }
+        });
+
+        // دکمه ریست رکوردها با تأیید
+        document.getElementById('btnResetScores').addEventListener('click', () => {
+          const t = TRANSLATIONS.confirm_reset[this.currentLang] || "مطمئنی؟";
+          if (confirm(t)) {
+            this.highScores.clearScores();
+            this.renderHighScoresTable();
+            this.showToast(TRANSLATIONS.reset_scores[this.currentLang]);
+          }
+        });
+      }
+
+      /**
+       * مدیریت لمس و کلیک برای حرکت نرم توپ
+       */
+      initInput() {
+        const updatePointer = (clientX, clientY) => {
+          const rect = this.canvas.getBoundingClientRect();
+          const scaleX = this.W / rect.width;
+          const scaleY = this.H / rect.height;
+
+          const cx = (clientX - rect.left) * scaleX;
+          const cy = (clientY - rect.top) * scaleY;
+
+          this.player.targetX = Math.max(this.player.radius, Math.min(this.W - this.player.radius, cx));
+          this.player.targetY = Math.max(this.player.radius, Math.min(this.H - this.player.radius, cy));
+        };
+
+        // رویدادهای ماوس
+        let isPointerDown = false;
+        this.canvas.addEventListener('mousedown', (e) => {
+          isPointerDown = true;
+          this.sound.initContext();
+          updatePointer(e.clientX, e.clientY);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (isPointerDown && this.isPlaying) {
+            updatePointer(e.clientX, e.clientY);
+          }
+        });
+
+        window.addEventListener('mouseup', () => {
+          isPointerDown = false;
+        });
+
+        // رویدادهای لمسی (موبایل)
+        this.canvas.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          this.sound.initContext();
+          if (e.touches.length > 0) {
+            updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+          e.preventDefault();
+          if (e.touches.length > 0 && this.isPlaying) {
+            updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }, { passive: false });
+      }
+
+      /**
+       * تغییر زبان جاری و به‌روزرسانی متن‌ها بدون ریستارت بازی
+       */
+      setLanguage(lang) {
+        this.currentLang = lang;
+        document.body.className = (lang === 'en') ? 'ltr' : 'rtl';
+        document.documentElement.lang = lang;
+        document.documentElement.dir = (lang === 'en') ? 'ltr' : 'rtl';
+
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+        });
+
+        this.updateLanguageUI();
+        this.renderHighScoresTable();
+      }
+
+      /**
+       * به‌روزرسانی متون رابط کاربری مطابق با زبان انتخاب شده
+       */
+      updateLanguageUI() {
+        const t = (key) => TRANSLATIONS[key] ? TRANSLATIONS[key][this.currentLang] || TRANSLATIONS[key]['fa'] : key;
+
+        document.getElementById('txtGameTitle').textContent = t('game_title');
+        document.getElementById('txtGameSubtitle').textContent = t('game_desc');
+
+        document.getElementById('lblScore').textContent = t('score');
+        document.getElementById('lblLives').textContent = t('lives');
+        document.getElementById('lblTime').textContent = t('time');
+        document.getElementById('lblCombo').textContent = t('combo');
+
+        document.getElementById('txtRestart').textContent = t('restart');
+        document.getElementById('txtChooseSkin').textContent = t('choose_skin');
+        document.getElementById('txtSettings').textContent = t('settings');
+
+        document.getElementById('txtSkinSectionTitle').textContent = t('choose_skin') + ":";
+        document.getElementById('txtSettingsTitle').textContent = t('settings_title');
+        document.getElementById('txtSoundEffects').textContent = t('sound_effects');
+        document.getElementById('txtBgMusic').textContent = t('background_music');
+        document.getElementById('txtResetScores').textContent = t('reset_scores');
+
+        document.getElementById('txtHighScoresTitle').textContent = t('high_scores');
+        document.getElementById('thPoints').textContent = t('points');
+        document.getElementById('thLevel').textContent = t('level');
+        document.getElementById('thDate').textContent = t('date');
+
+        if (!this.isPlaying) {
+          const overlayScore = document.getElementById('overlayScore');
+          if (this.score > 0) {
+            document.getElementById('overlayTitle').textContent = t('game_over');
+            overlayScore.textContent = `${t('your_score')}: ${this.score} | ${t('level')}: ${this.level}`;
+            document.getElementById('txtStartBtn').textContent = t('play_again');
+          } else {
+            document.getElementById('overlayTitle').textContent = t('game_title');
+            overlayScore.textContent = "";
+            document.getElementById('txtStartBtn').textContent = t('click_to_start');
+          }
+        }
+      }
+
+      /**
+       * شروع یک دست بازی جدید
+       */
+      startNewGame() {
+        this.isPlaying = true;
+        this.score = 0;
+        this.lives = 3;
+        this.timeLeft = 30;
+        this.level = 1;
+        this.baseSpeed = 2.0;
+        this.comboCount = 0;
+        this.lastHitTime = 0;
+
+        this.player.x = this.W / 2;
+        this.player.y = this.H / 2;
+        this.player.targetX = this.W / 2;
+        this.player.targetY = this.H / 2;
+        this.player.color = PALETTE[this.selectedSkinIndex].hex;
+        this.player.trail = [];
+
+        this.particles = [];
+        this.confetti = [];
+        this.floatingTexts = [];
+
+        // مخفی کردن لایه رویی
+        document.getElementById('canvasOverlay').classList.add('hidden');
+
+        // ایجاد پورتال‌ها و دشمن‌ها و موانع
+        this.initPortals();
+        this.initEnemies();
+        this.spawnObstacles();
+
+        this.updateStatsUI();
+
+        // آغاز تایمر اصلی چالش (۳۰ ثانیه اولیه)
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        this.timerInterval = setInterval(() => {
+          if (this.isPlaying) {
+            this.timeLeft--;
+            this.updateStatsUI();
+            if (this.timeLeft <= 0) {
+              this.gameOver();
+            }
+          }
+        }, 1000);
+
+        // تایمر جابجایی ۴ پورتال هر ۱۰ ثانیه
+        if (this.portalTimerInterval) clearInterval(this.portalTimerInterval);
+        this.portalTimerInterval = setInterval(() => {
+          if (this.isPlaying) {
+            this.repositionPortals();
+          }
+        }, 10000);
+
+        // شروع موسیقی پس‌زمینه در صورت فعال بودن
+        this.sound.startBgm();
+      }
+
+      /**
+       * ایجاد ۴ پورتال در ۴ جهت/گوشه صفحه
+       */
+      initPortals() {
+        this.portals = [
+          { id: 0, x: 50, y: 50, radius: 22, targetPortalId: 2, angle: 0, color: '#00f5d4' },
+          { id: 1, x: 450, y: 50, radius: 22, targetPortalId: 3, angle: 0, color: '#7b2ffc' },
+          { id: 2, x: 450, y: 450, radius: 22, targetPortalId: 0, angle: 0, color: '#00f5d4' },
+          { id: 3, x: 50, y: 450, radius: 22, targetPortalId: 1, angle: 0, color: '#7b2ffc' }
+        ];
+      }
+
+      /**
+       * تغییر مکان ۴ پورتال هر ۱۰ ثانیه (شوال شماره ۶)
+       */
+      repositionPortals() {
+        const margin = 50;
+        const positions = [
+          { x: margin + Math.random() * 80, y: margin + Math.random() * 80 },
+          { x: this.W - margin - Math.random() * 80, y: margin + Math.random() * 80 },
+          { x: this.W - margin - Math.random() * 80, y: this.H - margin - Math.random() * 80 },
+          { x: margin + Math.random() * 80, y: this.H - margin - Math.random() * 80 }
+        ];
+
+        this.portals.forEach((p, i) => {
+          p.x = positions[i].x;
+          p.y = positions[i].y;
+        });
+
+        this.addSparks(this.W / 2, this.H / 2, '#00f5d4', 20);
+        this.sound.playPortal();
+      }
+
+      /**
+       * ۲ دشمن هوشمند که به سمت توپ حرکت می‌کنند
+       */
+      initEnemies() {
+        this.enemies = [
+          {
+            x: 40,
+            y: 250,
+            radius: 14,
+            speed: 1.2,
+            color: '#ff0055',
+            pulse: 0
+          },
+          {
+            x: 460,
+            y: 250,
+            radius: 14,
+            speed: 1.2,
+            color: '#ff0055',
+            pulse: Math.PI
+          }
+        ];
+      }
+
+      /**
+       * ایجاد موانع دایره‌ای با اندازه‌های بین ۲۰ تا ۴۰ پیکسل (شعاع ۱۰ تا ۲۰)
+       */
+      spawnObstacles() {
+        this.obstacles = [];
+        // تعداد موانع با افزایش مرحله بیشتر می‌شود
+        const count = Math.min(7 + this.level * 2, 18);
+
+        // اطمینان از وجود حداقل ۲ مانع همرنگ با بازیکن برای امکان امتیازگیری
+        let playerColorCount = 0;
+
+        for (let i = 0; i < count; i++) {
+          let chosenColor;
+          if (playerColorCount < 2 && Math.random() < 0.45) {
+            chosenColor = this.player.color;
+            playerColorCount++;
+          } else {
+            const randomPalette = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+            chosenColor = randomPalette.hex;
+            if (chosenColor === this.player.color) playerColorCount++;
+          }
+
+          // ایجاد زاویه و مدار تصادفی به دور مرکز
+          const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+          const distance = 70 + Math.random() * 150;
+          const radius = 10 + Math.random() * 10; // قطر ۲۰ تا ۴۰ پیکسل
+
+          this.obstacles.push({
+            x: this.W / 2 + Math.cos(angle) * distance,
+            y: this.H / 2 + Math.sin(angle) * distance,
+            radius: radius,
+            color: chosenColor,
+            orbitRadius: distance,
+            angle: angle,
+            speed: (Math.random() * 0.015 + 0.01) * (Math.random() < 0.5 ? 1 : -1),
+            waveOffset: Math.random() * Math.PI * 2,
+            waveSpeed: 0.03 + Math.random() * 0.02
+          });
+        }
+      }
+
+      /**
+       * ثبت امتیاز و محاسبه سیستم کامبو و سختی
+       */
+      handleScore(obstacle) {
+        const now = performance.now();
+        const timeDiff = (now - this.lastHitTime) / 1000;
+        this.lastHitTime = now;
+
+        // سیستم کامبو: عبور متوالی زیر ۲ ثانیه (شوال شماره ۷)
+        if (timeDiff < 2.0 && this.score > 0) {
+          this.comboCount++;
+          this.sound.playCombo();
+          this.showToast(`${TRANSLATIONS.combo_x[this.currentLang] || "کامبو ×"} ${this.comboCount}`);
+          // هر ۳ کامبو = ۱ امتیاز اضافی
+          if (this.comboCount % 3 === 0) {
+            this.score += 2;
+            this.addFloatingText(obstacle.x, obstacle.y - 20, "+2 Combo! 🔥", '#00f5d4');
+          } else {
+            this.score += 1;
+            this.addFloatingText(obstacle.x, obstacle.y, "+1", obstacle.color);
+          }
+        } else {
+          this.comboCount = 1;
+          this.score += 1;
+          this.sound.playPing();
+          this.addFloatingText(obstacle.x, obstacle.y, "+1", obstacle.color);
+        }
+
+        // ایجاد انفجار جرقه‌های رنگی
+        this.addSparks(obstacle.x, obstacle.y, obstacle.color, 22);
+
+        // جابجایی مانع جمع‌آوری شده
+        this.respawnObstacle(obstacle);
+
+        // بررسی افزایش مرحله و سختی در هر ۱۵ امتیاز
+        if (this.score % 15 === 0) {
+          this.levelUp();
+        }
+
+        this.updateStatsUI();
+      }
+
+      /**
+       * جابجایی یک مانع پس از جمع‌آوری
+       */
+      respawnObstacle(obs) {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 80 + Math.random() * 140;
+        obs.orbitRadius = distance;
+        obs.angle = angle;
+        obs.x = this.W / 2 + Math.cos(angle) * distance;
+        obs.y = this.H / 2 + Math.sin(angle) * distance;
+        obs.radius = 10 + Math.random() * 10;
+
+        // ۴۰ درصد شانس همرنگ شدن با بازیکن تا بازی روان بماند
+        if (Math.random() < 0.4) {
+          obs.color = this.player.color;
+        } else {
+          obs.color = PALETTE[Math.floor(Math.random() * PALETTE.length)].hex;
+        }
+      }
+
+      /**
+       * برخورد با مانع غیرهمرنگ یا دشمن (کاهش ۱ جان)
+       */
+      handleDamage(x, y, message) {
+        this.lives--;
+        this.comboCount = 0;
+        this.shakeTimer = 18; // لرزش صفحه
+        this.sound.playBoom();
+
+        this.addSparks(x, y, '#ff0055', 25);
+        this.addFloatingText(x, y, message || TRANSLATIONS.life_lost[this.currentLang] || "یک جان از دست دادی! ❤️", '#ff006e');
+        this.showToast(message || TRANSLATIONS.life_lost[this.currentLang] || "یک جان از دست دادی! ❤️");
+
+        this.updateStatsUI();
+
+        if (this.lives <= 0) {
+          this.gameOver();
+        }
+      }
+
+      /**
+       * ارتقای مرحله هر ۱۵ امتیاز:
+       * - افزایش سرعت متغیر (+1.5 تا سقف 25)
+       * - افزایش زمان (+5 ثانیه)
+       * - جشن کانفتی
+       * - تغییر اسکین توپ به رنگ جدید
+       */
+      levelUp() {
+        this.level++;
+        this.baseSpeed = Math.min(25, this.baseSpeed + 1.5);
+        this.timeLeft += 5;
+
+        // تغییر رنگ توپ بازیکن به یکی دیگر از ۷ رنگ
+        let newSkinIdx;
+        do {
+          newSkinIdx = Math.floor(Math.random() * PALETTE.length);
+        } while (newSkinIdx === this.selectedSkinIndex && PALETTE.length > 1);
+
+        this.selectedSkinIndex = newSkinIdx;
+        this.player.color = PALETTE[this.selectedSkinIndex].hex;
+
+        // جشن کانفتی و صدای لول‌آپ
+        this.triggerConfetti();
+        this.sound.playLevelUp();
+
+        const msg = `${TRANSLATIONS.level_up[this.currentLang] || "مرحله جدید! ⭐"} (${this.level})`;
+        this.showToast(msg);
+        this.addFloatingText(this.W / 2, this.H / 2, msg, '#ffe600');
+
+        // بازسازی و افزایش موانع متناسب با مرحله جدید
+        this.spawnObstacles();
+      }
+
+      /**
+       * پایان بازی (Game Over)
+       */
+      gameOver() {
+        this.isPlaying = false;
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        if (this.portalTimerInterval) clearInterval(this.portalTimerInterval);
+
+        this.sound.stopBgm();
+        this.sound.playGameOver();
+
+        const isNewBest = this.highScores.isNewRecord(this.score);
+        if (isNewBest) {
+          this.triggerConfetti();
+          this.sound.playLevelUp();
+          this.showToast(TRANSLATIONS.new_record[this.currentLang] || "رکورد جدید! 🎉");
+        }
+
+        // ذخیره امتیاز در جدول رکوردها
+        this.highScores.saveScore(this.score, this.level);
+        this.renderHighScoresTable();
+
+        // نمایش لایه رویی Game Over
+        const t = (key) => TRANSLATIONS[key] ? TRANSLATIONS[key][this.currentLang] || TRANSLATIONS[key]['fa'] : key;
+        document.getElementById('overlayTitle').textContent = t('game_over');
+        document.getElementById('overlayScore').textContent = `${t('your_score')}: ${this.score} | ${t('level')}: ${this.level}`;
+        document.getElementById('txtStartBtn').textContent = t('play_again');
+        document.getElementById('canvasOverlay').classList.remove('hidden');
+      }
+
+      /**
+       * به‌روزرسانی پنل اطلاعات در پایین صفحه
+       */
+      updateStatsUI() {
+        document.getElementById('valScore').textContent = this.score;
+        document.getElementById('valTime').textContent = Math.max(0, this.timeLeft);
+        document.getElementById('valCombo').textContent = `×${this.comboCount}`;
+
+        // نمایش جان‌ها با قلب طلایی (💛 و 🖤)
+        let hearts = '';
+        for (let i = 0; i < 3; i++) {
+          hearts += (i < this.lives) ? '💛' : '🖤';
+        }
+        document.getElementById('valLives').textContent = hearts;
+
+        // نوار پیشرفت به سمت ۱۵ امتیاز بعدی
+        const progressPercent = ((this.score % 15) / 15) * 100;
+        document.getElementById('progressBar').style.width = `${progressPercent}%`;
+      }
+
+      /**
+       * رندر جدول ۵ رکورد برتر با تاریخ
+       */
+      renderHighScoresTable() {
+        const scores = this.highScores.getScores();
+        const tbody = document.getElementById('highScoresBody');
+        tbody.innerHTML = '';
+
+        if (scores.length === 0) {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td colspan="4" style="text-align:center; color:var(--text-muted);">-</td>`;
+          tbody.appendChild(row);
+          return;
+        }
+
+        scores.forEach((item, index) => {
+          const row = document.createElement('tr');
+          const medal = index === 0 ? '🥇 ' : (index === 1 ? '🥈 ' : (index === 2 ? '🥉 ' : ''));
+          row.innerHTML = `
+            <td>${medal}${index + 1}</td>
+            <td style="font-weight:700;">${item.score}</td>
+            <td>${item.level}</td>
+            <td style="color:var(--text-muted);">${item.date || '-'}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      /**
+       * نمایش پیام بنر موقت (Toast)
+       */
+      showToast(text) {
+        const toast = document.getElementById('toastBanner');
+        toast.textContent = text;
+        toast.classList.add('show');
+        if (this.toastTimeout) clearTimeout(this.toastTimeout);
+        this.toastTimeout = setTimeout(() => {
+          toast.classList.remove('show');
+        }, 1600);
+      }
+
+      /**
+       * ایجاد ذرات جرقه انفجار هنگام برخورد
+       */
+      addSparks(x, y, color, count = 18) {
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = Math.random() * 4.5 + 1.2;
+          this.particles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            radius: Math.random() * 3 + 1.5,
+            color: color,
+            alpha: 1,
+            decay: Math.random() * 0.03 + 0.02
+          });
+        }
+      }
+
+      /**
+       * متن‌های شناور عددی روی بوم
+       */
+      addFloatingText(x, y, text, color) {
+        this.floatingTexts.push({
+          x: x,
+          y: y,
+          text: text,
+          color: color,
+          alpha: 1,
+          vy: -1.2
+        });
+      }
+
+      /**
+       * سیستم کانفتی شادباش
+       */
+      triggerConfetti() {
+        for (let i = 0; i < 70; i++) {
+          const color = PALETTE[Math.floor(Math.random() * PALETTE.length)].hex;
+          this.confetti.push({
+            x: Math.random() * this.W,
+            y: -20,
+            vx: (Math.random() - 0.5) * 4,
+            vy: Math.random() * 3.5 + 2,
+            rotation: Math.random() * Math.PI * 2,
+            vRot: (Math.random() - 0.5) * 0.15,
+            size: Math.random() * 8 + 4,
+            color: color,
+            alpha: 1
+          });
+        }
+      }
+
+      /**
+       * حلقه اصلی فیزیک و رندرینگ انیمیشن (requestAnimationFrame)
+       */
+      gameLoop(timestamp) {
+        const dt = Math.min((timestamp - this.lastFrameTime) / 1000, 0.1);
+        this.lastFrameTime = timestamp;
+
+        this.update(dt);
+        this.draw();
+
+        requestAnimationFrame(this.gameLoop.bind(this));
+      }
+
+      /**
+       * به‌روزرسانی منطق، فیزیک، برخوردها و محاسبات
+       */
+      update(dt) {
+        // ۱. ستاره‌های چشمک‌زن
+        this.stars.forEach(s => {
+          s.alpha += s.pulseSpeed;
+          if (s.alpha > 1 || s.alpha < 0.2) s.pulseSpeed = -s.pulseSpeed;
+        });
+
+        // ۲. ذرات جرقه
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.alpha -= p.decay;
+          if (p.alpha <= 0) this.particles.splice(i, 1);
+        }
+
+        // ۳. کانفتی
+        for (let i = this.confetti.length - 1; i >= 0; i--) {
+          const c = this.confetti[i];
+          c.x += c.vx;
+          c.y += c.vy;
+          c.rotation += c.vRot;
+          if (c.y > this.H + 20) this.confetti.splice(i, 1);
+        }
+
+        // ۴. متون شناور
+        for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+          const ft = this.floatingTexts[i];
+          ft.y += ft.vy;
+          ft.alpha -= 0.02;
+          if (ft.alpha <= 0) this.floatingTexts.splice(i, 1);
+        }
+
+        if (!this.isPlaying) return;
+
+        // ۵. حرکت نرم توپ بازیکن به سمت موقعیت نشانگر
+        const dx = this.player.targetX - this.player.x;
+        const dy = this.player.targetY - this.player.y;
+        this.player.x += dx * 0.18;
+        this.player.y += dy * 0.18;
+
+        // ثبت دنباله رنگی درخشان توپ (Trail Effect)
+        this.player.trail.unshift({ x: this.player.x, y: this.player.y, alpha: 0.8 });
+        if (this.player.trail.length > 16) {
+          this.player.trail.pop();
+        }
+        this.player.trail.forEach((t, i) => {
+          t.alpha -= 0.04;
+        });
+
+        // ۶. حرکت موانع متحرک (چرخش دایره‌وار و موج‌دار به دور مرکز)
+        const speedFactor = 1 + (this.level - 1) * 0.2;
+        this.obstacles.forEach(obs => {
+          obs.angle += obs.speed * speedFactor;
+          obs.waveOffset += obs.waveSpeed;
+          // ترکیب حرکت مداری با نوسان موجی فاصله
+          const dynamicDist = obs.orbitRadius + Math.sin(obs.waveOffset) * 14;
+          obs.x = this.W / 2 + Math.cos(obs.angle) * dynamicDist;
+          obs.y = this.H / 2 + Math.sin(obs.angle) * dynamicDist;
+
+          // بررسی برخورد توپ با مانع
+          const dist = Math.hypot(this.player.x - obs.x, this.player.y - obs.y);
+          if (dist < this.player.radius + obs.radius) {
+            if (obs.color === this.player.color) {
+              // همرنگ = ۱ امتیاز و کامبو
+              this.handleScore(obs);
+            } else {
+              // غیرهمرنگ = کاهش ۱ جان
+              this.handleDamage(obs.x, obs.y);
+              this.respawnObstacle(obs);
+            }
+          }
+        });
+
+        // ۷. حرکت ۲ دشمن هوشمند به سمت توپ
+        const enemySpeed = 1.0 + (this.level * 0.28);
+        this.enemies.forEach(en => {
+          const edx = this.player.x - en.x;
+          const edy = this.player.y - en.y;
+          const dist = Math.hypot(edx, edy);
+
+          if (dist > 1) {
+            en.x += (edx / dist) * enemySpeed;
+            en.y += (edy / dist) * enemySpeed;
+          }
+          en.pulse += 0.08;
+
+          // برخورد با دشمن
+          if (dist < this.player.radius + en.radius) {
+            this.handleDamage(en.x, en.y, TRANSLATIONS.enemy[this.currentLang] || "دشمن! ⚠️");
+            // رانده شدن دشمن به عقب
+            en.x -= (edx / dist) * 70;
+            en.y -= (edy / dist) * 70;
+          }
+        });
+
+        // ۸. پورتال‌های ۴ گانه انتقال
+        this.portals.forEach(portal => {
+          portal.angle += 0.04;
+          const pDist = Math.hypot(this.player.x - portal.x, this.player.y - portal.y);
+
+          // اگر توپ وارد پورتال شد
+          if (pDist < this.player.radius + portal.radius - 6) {
+            const targetPortal = this.portals[portal.targetPortalId];
+            if (targetPortal) {
+              // انتقال توپ به پورتال متقابل
+              this.player.x = targetPortal.x;
+              this.player.y = targetPortal.y;
+              this.player.targetX = targetPortal.x;
+              this.player.targetY = targetPortal.y;
+
+              this.addSparks(portal.x, portal.y, portal.color, 20);
+              this.addSparks(targetPortal.x, targetPortal.y, targetPortal.color, 20);
+              this.sound.playPortal();
+              this.showToast(TRANSLATIONS.portal[this.currentLang] || "پورتال انتقال! 🌀");
+            }
+          }
+        });
+
+        // کاهش زمان لرزش
+        if (this.shakeTimer > 0) this.shakeTimer--;
+      }
+
+      /**
+       * رندرینگ صحنه کهکشانی روی بوم
+       */
+      draw() {
+        this.ctx.save();
+
+        // اعمال افکت لرزش صفحه هنگام برخورد با مانع غیرهمرنگ
+        if (this.shakeTimer > 0) {
+          const sx = (Math.random() - 0.5) * 8;
+          const sy = (Math.random() - 0.5) * 8;
+          this.ctx.translate(sx, sy);
+        }
+
+        // پاک کردن بوم با پس‌زمینه کهکشانی
+        this.ctx.fillStyle = '#060713';
+        this.ctx.fillRect(0, 0, this.W, this.H);
+
+        // سحابی‌های رنگی در پس‌زمینه
+        const nebGrad1 = this.ctx.createRadialGradient(150, 150, 20, 150, 150, 220);
+        nebGrad1.addColorStop(0, 'rgba(123, 47, 252, 0.14)');
+        nebGrad1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        this.ctx.fillStyle = nebGrad1;
+        this.ctx.fillRect(0, 0, this.W, this.H);
+
+        const nebGrad2 = this.ctx.createRadialGradient(380, 360, 20, 380, 360, 200);
+        nebGrad2.addColorStop(0, 'rgba(0, 180, 216, 0.12)');
+        nebGrad2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        this.ctx.fillStyle = nebGrad2;
+        this.ctx.fillRect(0, 0, this.W, this.H);
+
+        // رسم ستاره‌های چشمک‌زن
+        this.stars.forEach(s => {
+          this.ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+          this.ctx.beginPath();
+          this.ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+          this.ctx.fill();
+        });
+
+        // رسم ۴ پورتال انتقال با حلقه‌های چرخنده نئونی
+        this.portals.forEach(portal => {
+          this.ctx.save();
+          this.ctx.translate(portal.x, portal.y);
+          this.ctx.rotate(portal.angle);
+
+          this.ctx.shadowBlur = 15;
+          this.ctx.shadowColor = portal.color;
+
+          // حلقه بیرونی
+          this.ctx.strokeStyle = portal.color;
+          this.ctx.lineWidth = 3;
+          this.ctx.beginPath();
+          this.ctx.arc(0, 0, portal.radius, 0, Math.PI * 1.5);
+          this.ctx.stroke();
+
+          // حلقه داخلی
+          this.ctx.rotate(-portal.angle * 2.2);
+          this.ctx.strokeStyle = '#ffffff';
+          this.ctx.lineWidth = 1.5;
+          this.ctx.beginPath();
+          this.ctx.arc(0, 0, portal.radius * 0.6, 0, Math.PI * 1.2);
+          this.ctx.stroke();
+
+          this.ctx.restore();
+        });
+
+        // رسم موانع متحرک با رنگ‌های مختلف و سایه‌های نئونی
+        this.obstacles.forEach(obs => {
+          this.ctx.save();
+          this.ctx.shadowBlur = (obs.color === this.player.color) ? 18 : 10;
+          this.ctx.shadowColor = obs.color;
+
+          this.ctx.fillStyle = obs.color;
+          this.ctx.beginPath();
+          this.ctx.arc(obs.x, obs.y, obs.radius, 0, Math.PI * 2);
+          this.ctx.fill();
+
+          // حلقه راهنما برای مانع همرنگ با بازیکن جهت دید آسان‌تر
+          if (obs.color === this.player.color) {
+            this.ctx.strokeStyle = '#ffffff';
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.arc(obs.x, obs.y, obs.radius + 3, 0, Math.PI * 2);
+            this.ctx.stroke();
+          }
+
+          this.ctx.restore();
+        });
+
+        // رسم ۲ دشمن هوشمند با هاله قرمز تپنده
+        this.enemies.forEach(en => {
+          this.ctx.save();
+          const pulseR = en.radius + Math.sin(en.pulse) * 3;
+          this.ctx.shadowBlur = 18;
+          this.ctx.shadowColor = en.color;
+
+          this.ctx.fillStyle = en.color;
+          this.ctx.beginPath();
+          this.ctx.arc(en.x, en.y, en.radius, 0, Math.PI * 2);
+          this.ctx.fill();
+
+          // حلقه خطر بیرونی
+          this.ctx.strokeStyle = '#ffe600';
+          this.ctx.lineWidth = 1.8;
+          this.ctx.beginPath();
+          this.ctx.arc(en.x, en.y, pulseR, 0, Math.PI * 2);
+          this.ctx.stroke();
+
+          // علامت ضربدر درون دشمن
+          this.ctx.strokeStyle = '#ffffff';
+          this.ctx.lineWidth = 2;
+          this.ctx.beginPath();
+          this.ctx.moveTo(en.x - 4, en.y - 4);
+          this.ctx.lineTo(en.x + 4, en.y + 4);
+          this.ctx.moveTo(en.x + 4, en.y - 4);
+          this.ctx.lineTo(en.x - 4, en.y + 4);
+          this.ctx.stroke();
+
+          this.ctx.restore();
+        });
+
+        // رسم دنباله‌دار (Trail) توپ بازیکن
+        for (let i = 0; i < this.player.trail.length; i++) {
+          const tr = this.player.trail[i];
+          if (tr.alpha <= 0) continue;
+          this.ctx.fillStyle = this.player.color;
+          this.ctx.globalAlpha = tr.alpha * 0.5;
+          const trRadius = this.player.radius * (1 - (i / this.player.trail.length) * 0.7);
+          this.ctx.beginPath();
+          this.ctx.arc(tr.x, tr.y, trRadius, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+        this.ctx.globalAlpha = 1;
+
+        // رسم توپ بازیکن
+        this.ctx.save();
+        this.ctx.shadowBlur = 22;
+        this.ctx.shadowColor = this.player.color;
+
+        // لایه بیرونی توپ
+        this.ctx.fillStyle = this.player.color;
+        this.ctx.beginPath();
+        this.ctx.arc(this.player.x, this.player.y, this.player.radius, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // بازتاب نور درونی سفید
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.beginPath();
+        this.ctx.arc(this.player.x - 4, this.player.y - 4, this.player.radius * 0.35, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.restore();
+
+        // رسم جرقه‌ها و ذرات انفجار
+        this.particles.forEach(p => {
+          this.ctx.save();
+          this.ctx.globalAlpha = Math.max(0, p.alpha);
+          this.ctx.fillStyle = p.color;
+          this.ctx.shadowBlur = 8;
+          this.ctx.shadowColor = p.color;
+          this.ctx.beginPath();
+          this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          this.ctx.fill();
+          this.ctx.restore();
+        });
+
+        // رسم کانفتی‌ها
+        this.confetti.forEach(c => {
+          this.ctx.save();
+          this.ctx.translate(c.x, c.y);
+          this.ctx.rotate(c.rotation);
+          this.ctx.fillStyle = c.color;
+          this.ctx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size * 0.6);
+          this.ctx.restore();
+        });
+
+        // رسم متن‌های شناور
+        this.floatingTexts.forEach(ft => {
+          this.ctx.save();
+          this.ctx.font = "bold 16px system-ui, sans-serif";
+          this.ctx.textAlign = "center";
+          this.ctx.fillStyle = ft.color;
+          this.ctx.shadowBlur = 10;
+          this.ctx.shadowColor = ft.color;
+          this.ctx.globalAlpha = Math.max(0, ft.alpha);
+          this.ctx.fillText(ft.text, ft.x, ft.y);
+          this.ctx.restore();
+        });
+
+        this.ctx.restore();
+      }
+    }
+
+    // راه‌اندازی بازی پس از بارگذاری کامل صفحه
+    window.addEventListener('DOMContentLoaded', () => {
+      window.gameInstance = new ColorGalaxyGame();
+    });
+  </script>
+</body>
+</html>
